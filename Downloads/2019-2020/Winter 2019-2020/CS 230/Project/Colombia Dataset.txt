@@ -1,0 +1,14 @@
+import urllib.req
+import json
+
+endpoint = 'https://maps.googleapis.com/maps/api/geocode/json?
+api_key = 'AIzaSyC3Y4TqSQwu4ztz4gsL9eXUstE4scSpu-w'
+address = input('Barrio input')
+
+location_request = 'address=()&key=()'.format(address,api_key)
+
+request = endpoint + location_request
+result = urllib.request.urlopen(request).read()
+coordinates = json.loads(result)
+print(result)
+# Got the outline from https://www.youtube.com/watch?v=UrrWxyq1Z48

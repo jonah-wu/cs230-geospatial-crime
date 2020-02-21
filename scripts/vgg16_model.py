@@ -10,6 +10,9 @@ from numpy.random import randn
 import pathlib
 import random
 import keras,os
+
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
  
 import tensorflow as tf
@@ -26,20 +29,22 @@ from keras.preprocessing.image import ImageDataGenerator
 from matplotlib.image import imread
 from keras.preprocessing import image
 
-tf.enable_eager_execution()
  
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
+
+data_dir = tf.keras.utils.get_file('flower_photos','https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz', untar=True)
+data_dir = pathlib.Path(data_dir)
 #taken from https://realpython.com/working-with-files-in-python/
 # and https://www.guru99.com/reading-and-writing-files-in-python.html
-with open == open("File Name", "r") as f:
-	data_file = f.read();
+#with open == open("File Name", "r") as f:
+#data_file = f.read();
 
 #Only need this if taking the file from URL --> https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
 #data_dir = tf.keras.utils.get_file('put file name','put URL here', untar=True) 
 ##Import images as 640 * 640
 #https://docs.python.org/3/library/pathlib.html
-data_file = pathlib.Path(data_file)
+#data_file = pathlib.Path(data_file)
 
 ## This is just an example of a classification that we can set up but must correspond to what's in the image file
 label_names={'daisy': 0, 'dandelion': 1, 'roses': 2, 'sunflowers': 3, 'tulips': 4}
@@ -72,7 +77,7 @@ BATCH_SIZE = 32
  
 def _parse_data(x,y):
   ##This processes the image data 
-  image = tf.read_file(x)
+  image = tf.io.read_file(x)
   image = tf.image.decode_jpeg(image, channels=3)
   image = tf.cast(image, tf.float32)
   image = (image/127.5) - 1
@@ -120,7 +125,7 @@ prediction_layer = tf.keras.layers.Dense(len(label_names),activation='softmax')
 model = tf.keras.Sequential([VGG16_MODEL, global_average_layer, prediction_layer])
 
 #See loss functions at https://www.tensorflow.org/api_docs/python/tf/keras/losses - would need to look this up
-model.compile(optimizer=tf.train.AdamOptimizer(), loss=tf.keras.losses.sparse_categorical_crossentropy,  metrics=["accuracy"])
+model.compile(optimizer=tf.optimizers.Adam(), loss=tf.keras.losses.SparseCategoricalCrossentropy(),  metrics=["accuracy"])
 
 history = model.fit(train_ds, epochs=100, steps_per_epoch=2, validation_steps=2, validation_data=validation_ds)
 

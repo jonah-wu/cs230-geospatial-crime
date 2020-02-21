@@ -3,8 +3,8 @@ import numpy as np
 from collections import defaultdict
 
 # Read in csv
-latlong_df = pd.read_csv("street_intersections.csv")
-crime_df = pd.read_csv("crime.csv")
+latlong_df = pd.read_csv("../data/street_intersections.csv")
+crime_df = pd.read_csv("../data/crime.csv")
 crime_df = crime_df[crime_df['point'].notna()] #Remove nan values
 latlong_df = latlong_df.drop_duplicates(subset=['Latitude', 'Longitude'])
 print("After rounding to 5 decimal places we have " + str(latlong_df['Latitude'].size) + " unique lat-long intersections.")
@@ -53,6 +53,5 @@ for key in latlong_to_crimes:
         indx = latlong_to_indx[key]
         crimecount = latlong_to_crimes[key]
         indx_to_crimecounts.update({indx:crimecount})
-print(indx_to_crimecounts)
 
 

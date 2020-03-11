@@ -32,9 +32,10 @@ from keras.preprocessing import image
  
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-
-data_dir = tf.keras.utils.get_file('flower_photos','https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz', untar=True)
+data_dir = '../data/streetview_imgs'
+#data_dir = tf.keras.utils.get_file('flower_photos','https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz', untar=True)
 data_dir = pathlib.Path(data_dir)
+print(data_dir)
 #taken from https://realpython.com/working-with-files-in-python/
 # and https://www.guru99.com/reading-and-writing-files-in-python.html
 #with open == open("File Name", "r") as f:
@@ -47,33 +48,53 @@ data_dir = pathlib.Path(data_dir)
 #data_file = pathlib.Path(data_file)
 
 ## This is just an example of a classification that we can set up but must correspond to what's in the image file
-label_names={'daisy': 0, 'dandelion': 1, 'roses': 2, 'sunflowers': 3, 'tulips': 4}
-label_key=['daisy','dandelion','roses','sunflowers','tulips']
+label_names={'bin1': 2, 'bin2': 0, 'bin3': 1} # bin1 --> cluster 0, bin2 --> cluster1, bin3 --> cluster 2
+label_key=[2,0,1]
 
+           
 ## Sets the images queried in an array
 all_images = list(data_dir.glob('*/*'))
-all_images = [str(path) for path in all_images]
+all_images = [str(path) for path in all_images if path is not '.git']
+print(len(all_images))
 random.shuffle(all_images)
 
 ## Seems like this is trying to search the labels within the given get_file --> get the parent and the name
 ## See https://docs.python.org/3/library/pathlib.html --> For loop over all the label names
 ## Look at https://docs.python.org/3/library/pathlib.html
-all_labels=[label_names[pathlib.Path(path).parent.name] for path in all_images]
+all_labels = []
+for path in all_images:
+    #Odd for some reason there's a .git path that was caught in the folder?
+    print(pathlib.Path(path).parent.name)
+    if pathlib.Path(path).parent.name in label_names:
+        label = label_names[pathlib.Path(path).parent.name]
+        all_labels.append(label)
+    else:
+        print(path)
+        print(pathlib.Path(path))
+        print(pathlib.Path(path).parent.name)
+        print(pathlib.Path(path).parent)
+
+
+
+
+#all_labels=[label_names[pathlib.Path(path).parent.name] for path in all_images]
  
 data_size=len(all_images)
  
-train_test_split=(int)(data_size*0.2)
+train_test_split=(int)(data_size*0.1)
  
 # Spliting up data into training sets
 x_train=all_images[train_test_split:]
+print(len(x_train))
 x_test=all_images[:train_test_split]
  
 y_train=all_labels[train_test_split:]
+print(len(y_train))
 y_test=all_labels[:train_test_split]
  
-IMG_SIZE = 160 # Set the constant here
+IMG_SIZE = 244 # Set the constant here (orig size is 640)
  
-BATCH_SIZE = 32
+BATCH_SIZE = 256
  
 def _parse_data(x,y):
   ##This processes the image data 
@@ -137,8 +158,8 @@ print("loss: {:.2f}".format(loss0))
 print("accuracy: {:.2f}".format(accuracy0))
 
 # Accuracy Plot
-plt.plot(history.history['acc'])
-plt.plot(history.history['val_acc'])
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
 plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')

@@ -48,8 +48,13 @@ print(data_dir)
 #data_file = pathlib.Path(data_file)
 
 ## This is just an example of a classification that we can set up but must correspond to what's in the image file
+<<<<<<< HEAD
 label_names={'bin1': 2, 'bin2': 0, 'bin3': 1} # bin1 --> cluster 0, bin2 --> cluster1, bin3 --> cluster 2
 label_key=[2,0,1]
+=======
+label_names={'bin1': 0, 'bin2': 1, 'bin3': 2}
+label_key=[0,1,2]
+>>>>>>> 9ba1b74e028c441f6a3269cda53cd18f34e8bfb3
 
            
 ## Sets the images queried in an array

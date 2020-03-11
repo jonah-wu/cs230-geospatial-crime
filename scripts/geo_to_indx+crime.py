@@ -3,23 +3,13 @@ import geo_grid
 import numpy as np
 from collections import defaultdict
 import bin_to_folder as b2f
-<<<<<<< HEAD
 import csv
 import pickle
 import kmeans_for_geo
-=======
->>>>>>> 9ba1b74e028c441f6a3269cda53cd18f34e8bfb3
-
 #Imports for K-means not using numpy -https://towardsdatascience.com/machine-learning-algorithms-part-9-k-means-example-in-python-f2ad05ed5203
 #from matplotlib import pyplot as plt
 #from sklearn.datasets.samples_generator import make_blobs
 #from sklearn.cluster import _kmeans
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 9ba1b74e028c441f6a3269cda53cd18f34e8bfb3
-
 # Read in csv
 latlong_df = pd.read_csv("../data/street_intersections.csv")
 crime_df = pd.read_csv("../data/crime.csv")
@@ -195,6 +185,22 @@ def create_bins_from_clusters(geoidx_to_label, latlongidx_to_geoidx):
 
 b0, b1, b2 = create_bins_from_clusters(geoidx_to_label, latlongidx_to_geoidx)
 data_path = "../data/streetview_imgs"
+
+
+b0_pkl = open("../data/b0_list.pickle", "wb")
+pickle.dump(b0, b0_pkl)
+b0_pkl.close()
+
+b1_pkl = open("../data/b1_list.pickle", "wb")
+pickle.dump(b1, b1_pkl)
+b1_pkl.close()
+
+
+b2_pkl = open("../data/b2_list.pickle", "wb")
+pickle.dump(b2, b2_pkl)
+b2_pkl.close()
+
+
 b2f.bin_files(b0, b1, b2, data_path)
 
 # idx_to_crimecounts = {}
@@ -206,17 +212,6 @@ b2f.bin_files(b0, b1, b2, data_path)
 
 
 
-
-
-# b1, b2, b3 = bin_imgs(indx_to_crimecounts)
-# data_path = "../data/streetview_imgs"
-# b2f.bin_files(b1, b2, b3, data_path)
-
-
-
-b1, b2, b3 = bin_imgs(indx_to_crimecounts)
-data_path = "/Users/jonahwu/Documents/CSStanford/CS230/CS230Project/data/streetview_imgs"
-b2f.bin_files(b1, b2, b3, data_path)
 
 """
 kmeans = KMeans(init = 'k-means++', n_clusters = 3).fit(index_to_crimecounts)

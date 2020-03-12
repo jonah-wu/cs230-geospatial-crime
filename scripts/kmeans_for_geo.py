@@ -16,8 +16,8 @@ from sklearn.cluster import KMeans
 import pickle
 from collections import Counter
 
-geoidx_to_crimecounts_pkl = open("../data/regionidx_to_crimecounts.pickle","rb")
-geoidx_to_crimecounts = pickle.load(geoidx_to_crimecounts_pkl)
+# geoidx_to_crimecounts_pkl = open("../data/regionidx_to_crimecounts.pickle","rb")
+# geoidx_to_crimecounts = pickle.load(geoidx_to_crimecounts_pkl)
 
 
 def print_distribution(regions_to_crimes):
@@ -47,7 +47,7 @@ def print_distribution(regions_to_crimes):
         prev_item = item
 
 
-def run_KMeans():
+def run_KMeans(geoidx_to_crimecounts):
 	kmeans = KMeans(init = 'k-means++', n_clusters = 3)
 	data = np.log1p(np.asarray(list(geoidx_to_crimecounts.values())).reshape(-1,1))
 	print(len(data))
@@ -59,8 +59,6 @@ def run_KMeans():
 	values = y
 	geoidx_to_label = dict(zip(keys, values))
 	return geoidx_to_label
-
-
 
 def min_max_of_class(idx_to_label, geoidx_to_crimecounts, num_of_clusters = 3):
 	cluster_zero = []
@@ -85,6 +83,7 @@ def min_max_of_class(idx_to_label, geoidx_to_crimecounts, num_of_clusters = 3):
 	print(" The max of cluster1 is " + str(one_max) + " and the min is " + str(one_min))
 	print(" The max of cluster2 is " + str(two_max) + " and the min is " + str(two_min))
 
+	return [(zero_min, zero_max), (one_min, one_max), (two_min, two_max)]
 # plt.scatter(X[:,0], X[:,1])
 # plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:,1], s = 300, c='red')
 # plt.show()

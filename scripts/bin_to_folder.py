@@ -7,15 +7,15 @@ import os
 def bin_files(bin1, bin2, bin3, path):
     mypath = path
     onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
-    print(onlyfiles)
+    #print(onlyfiles)
     #print(bin1)
     
     if '6814.jpg' in onlyfiles:
         print('True')
     # create two seperate lists from onlyfiles list based on lis1 and lis2
-    lis1files = [j + '.jpg' for j in bin1 if j + '.jpg' in onlyfiles]
-    lis2files = [j + '.jpg' for j in bin2 if j + '.jpg' in onlyfiles]
-    lis3files = [j + '.jpg' for j in bin3 if j + '.jpg' in onlyfiles]
+    lis1files = [j + '_sat.jpg' for j in bin1 if j + '.jpg' in onlyfiles]
+    lis2files = [j + '_sat.jpg' for j in bin2 if j + '.jpg' in onlyfiles]
+    lis3files = [j + '_sat.jpg' for j in bin3 if j + '.jpg' in onlyfiles]
 
 
         #for j in bin1:

@@ -129,7 +129,15 @@ print("Syncing up latlongs to the grid regions ....")
 # print(geo_ids_to_polygons)
 latlongs_to_regions = geo_grid.latlongs_to_regions(latlongs, geo_grid_df) 
 
-#print(latlongs_to_regions)
+
+num_unpaired_latlongs = 0
+unpaired_latlongs = []
+for key, value in latlongs_to_regions.items():
+    if value == 0: # No region found ...
+        num_unpaired_latlongs += 1
+        unpaired_latlongs.append(key)
+print('We have ' + str(num_unpaired_latlongs) + " latlongs that do not sync up with a geo_id out of " + str(len(list(latlongs_to_regions.keys()))) + " latlongs.")
+print(unpaired_latlongs)
 
 # w = csv.writer(open("latlongs_to_regions.csv", "w"))
 # for key, val in latlongs.items():
@@ -139,9 +147,9 @@ latlong_to_crimes = latlong_to_crimecounts(latlongs, crime_df)
 regions_to_crimes = geo_grid.regions_to_crimes(latlong_to_crimes, latlongs_to_regions, num_of_regions)
 
 
-idx_to_crimecount_pickle = open("../data/regionidx_to_crimecounts.pickle", "wb")
-pickle.dump(regions_to_crimes, idx_to_crimecount_pickle)
-idx_to_crimecount_pickle.close()
+# idx_to_crimecount_pickle = open("../data/regionidx_to_crimecounts.pickle", "wb")
+# pickle.dump(regions_to_crimes, idx_to_crimecount_pickle)
+# idx_to_crimecount_pickle.close()
 
 
 print("Hooking up the latlong indices for our images to the geo indices ...")
@@ -155,14 +163,9 @@ for key, idx in latlong_to_idx.items():
         print("Key error," + str(key) +  "not found in latlong_to_regions")      
 #print(latlongidx_to_geoidx)
 
-a = 0
-for value in latlongidx_to_geoidx.values():
-    if value == 0:
-        a += 1
-print('We have ' + str(a) + " latlongs that do not sync up with a geo_id out of " + str(len(list(latlongidx_to_geoidx.keys()))) + "latlongs")
 print(" Running Kmeans on our data and clustering into 3 bins... ")
-geoidx_to_label = kmeans_for_geo.run_KMeans()
-kmeans_for_geo.min_max_of_class(geoidx_to_label, regions_to_crimes)
+geoidx_to_label = kmeans_for_geo.run_KMeans(regions_to_crimes)
+cluster_min_maxes = kmeans_for_geo.min_max_of_class(geoidx_to_label, regions_to_crimes)
 
 
 def create_bins_from_clusters(geoidx_to_label, latlongidx_to_geoidx):
@@ -184,6 +187,27 @@ def create_bins_from_clusters(geoidx_to_label, latlongidx_to_geoidx):
     return b0, b1, b2
 
 b0, b1, b2 = create_bins_from_clusters(geoidx_to_label, latlongidx_to_geoidx)
+
+latlongidx_to_crimecounts = {}
+for key in latlong_to_crimes:
+    if key in latlongs:
+        idx = latlong_to_idx[key]
+        crimecount = latlong_to_crimes[key]
+        latlongidx_to_crimecounts.update({idx:crimecount})
+
+print('Adding in the leftover unpaired latlongs into the bins based on their raw crime count ...')
+b0_thresholds = cluster_min_maxes[0]
+b1_thresholds = cluster_min_maxes[1]
+b2_thresholds = cluster_min_maxes[2]
+for key, value in latlongidx_to_crimecounts.items():
+    if value <= b0_thresholds[1] and value >= b0_thresholds[0]: # If less than b0's max threshold than 
+        b0.append(str(key))
+    elif value <= b1_thresholds[1] and value >= b1_thresholds[0]:
+        b1.append(str(key))
+    else:
+        b2.append(str(key))
+
+
 data_path = "../data/streetview_imgs"
 
 
@@ -203,12 +227,7 @@ b2_pkl.close()
 
 b2f.bin_files(b0, b1, b2, data_path)
 
-# idx_to_crimecounts = {}
-# for key in latlong_to_crimes:
-#     if key in latlongs:
-#         idx = latlong_to_idx[key]
-#         crimecount = latlong_to_crimes[key]
-#         idx_to_crimecounts.update({idx:crimecount})
+
 
 
 

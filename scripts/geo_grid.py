@@ -16,10 +16,10 @@ from collections import defaultdict
 
 # boros = GeoDataFrame.from_file('./SFZoningDistricts/geo_export_a5eea1cd-2a31-46ff-9b25-0342e8e1a5eb.shp')
 # print(boros)
-# # boros = boros.set_index('zonin')
+# boros = boros.set_index('zonin')
 # boros = boros.sort_index()
 # print(boros)
-# # Plot and color by borough
+# Plot and color by borough
 # boros.plot(column = 'zoning_sim')
 # print(boros.geometry)
 
@@ -30,7 +30,7 @@ from collections import defaultdict
 
 # make a grid of latitude-longitude values
 def create_grid(stepsize, place):
-	xmin, xmax, ymin, ymax = 37.709, 37.810, -122.502, -122.376
+	xmin, xmax, ymin, ymax = 37.709, 37.810, -122.510, -122.376
 	if place == '10k':
 		#print(stepsize/.0001)
 		stepsize_multiplier = 10000
@@ -65,11 +65,22 @@ def create_grid(stepsize, place):
 			i += 1
 
 	my_gdf = gpd.GeoDataFrame(square_list)
-	my_gdf.plot()
-	my_gdf.head()
+
+
+	# list_polygons = []
+	# for index, row in my_gdf.iterrows():
+	# 	list_polygons.append(row['geometry'])
+
+	# gSeries_grid = GeoSeries(list_polygons)
+	# gSeries_grid.boundary.plot()
+	# # zoningdistrict = GeoDataFrame.from_file('/Users/jonahwu/Desktop/SFZoningDistricts/geo_export_a5eea1cd-2a31-46ff-9b25-0342e8e1a5eb.shp')
+	# # zoningdistrict.plot(ax=ax, color='orange', zorder = 1)
+
+
+
 	# print(type(my_gdf))
-	# breakpoint()
-	#plt.show()
+	# # breakpoint()
+	# plt.show()
 	return my_gdf
 
 

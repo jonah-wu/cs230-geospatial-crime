@@ -27,19 +27,22 @@ def bin_files(bin1, bin2, bin3, sat_path, street_path):
     lis2files = []
     lis3files = []
 
-    print(street_files)
-    print(sat19_files)
-
+#    print(street_files)
+#    print(sat19_files)
+    print("B1's length is")
+    print(len(bin1))
     for j in bin1:
         if j + '_sat_19.jpg' in sat19_copy_files and j + '.jpg' in street_files:
             lis1files.append(j + '.jpg')
             sat19_lis1files.append(j + '_sat_19.jpg')
-
+    print("B2's length is")
+    print(len(bin2))
     for j in bin2:
         if j + '_sat_19.jpg' in sat19_copy_files and j + '.jpg' in street_files:
             lis2files.append(j + '.jpg')
             sat19_lis2files.append(j + '_sat_19.jpg')
-
+    print("B3's length is")
+    print(len(bin3))
     for j in bin3:
         if j + '_sat_19.jpg' in sat19_copy_files and j + '.jpg' in street_files:
             lis3files.append(j + '.jpg')
@@ -68,20 +71,24 @@ def bin_files(bin1, bin2, bin3, sat_path, street_path):
         os.makedirs(subfolder3)
 
     # move files to their respective sub folders
+    print("This is sat19_list1files")
+    print(len(sat19_lis1files))
     for i in sat19_lis1files:
         #print(i)
         source = os.path.join(satellite_path, i)
         destination = os.path.join(subfolder1, i)
         if os.path.isfile(source):
             os.rename(source, destination)
-
+    print("This is sat19_list2files")
+    print(len(sat19_lis2files))
     for i in sat19_lis2files:
         #print(i)
         source = os.path.join(satellite_path, i)
         destination = os.path.join(subfolder2, i)
         if os.path.isfile(source):
             os.rename(source, destination)
-
+    print("This is sat19_list3files")
+    print(len(sat19_lis3files))
     for i in sat19_lis3files:
         #print(i)
         source = os.path.join(satellite_path, i)

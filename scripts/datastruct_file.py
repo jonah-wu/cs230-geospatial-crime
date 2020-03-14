@@ -31,6 +31,18 @@ def main():
     latlong_to_indx = {v: k for k, v in indx_to_latlongs.items()}
     indx_to_crimecounts = {latlong_to_indx[key]:latlong_to_crimecount[key] for key in latlong_to_crimecount if key in latlongs}
     latlongs_to_geoid = geo_grid.latlongs_to_regions(latlongs, geo_grid_df) 
+
+
+    num_unpaired_latlongs = 0
+    unpaired_latlongs = []
+    for key, value in latlongs_to_geoid.items():
+        if value == 0: # No region found ...
+            num_unpaired_latlongs += 1
+            unpaired_latlongs.append(key)
+    print('We have ' + str(num_unpaired_latlongs) + " latlongs that do not sync up with a geo_id out of " + str(len(list(latlongs_to_geoid.keys()))) + " latlongs.")
+    print(unpaired_latlongs)
+
+
     geoids_to_regions = geo_grid.ids_to_polygons(geo_grid_df)
     num_of_regions = len(list(geoids_to_regions.keys()))
     geoid_to_crimecount = geo_grid.regions_to_crimes(latlong_to_crimecount, latlongs_to_geoid, num_of_regions)
@@ -47,6 +59,9 @@ def main():
     print("Running KMeans on our data and clustering into 3 bins ...")
     geoid_to_label = kmeans_for_geo.run_KMeans(geoid_to_crimecount)
     cluster_min_maxes = kmeans_for_geo.cluster_min_maxes(geoid_to_label, geoid_to_crimecount)
+
+
+
     b0, b1, b2 = create_bins_from_clusters(geoid_to_label, latlongid_to_geoid)
     latlongidx_to_crimecounts = {}
     for key in latlong_to_crimecount:
@@ -55,18 +70,25 @@ def main():
             crimecount = latlong_to_crimecount[key]
             latlongidx_to_crimecounts.update({idx:crimecount})
 
+
+
+
     print('Adding in the leftover unpaired latlongs into the bins based on their raw crime count ...')
     b0_thresholds = cluster_min_maxes[0]
     b1_thresholds = cluster_min_maxes[1]
     b2_thresholds = cluster_min_maxes[2]
     for key, value in latlongidx_to_crimecounts.items():
-        if value <= b0_thresholds[1] and value >= b0_thresholds[0]: # If less than b0's max threshold than 
-            b0.append(str(key))
-        elif value <= b1_thresholds[1] and value >= b1_thresholds[0]:
-            b1.append(str(key))
-        else:
-            b2.append(str(key))
+        if indx_to_latlongs[key] in unpaired_latlongs:
+            if value <= b0_thresholds[1] and value >= b0_thresholds[0]: # If less than b0's max threshold than 
+                b0.append(str(key))
+            elif value <= b1_thresholds[1] and value >= b1_thresholds[0]:
+                b1.append(str(key))
+            else:
+                b2.append(str(key))
 
+    print(len(b0))
+    print(len(b1))
+    print(len(b2))
 
     print("Creating the pkle lists...")
     b0_pkl = open("../data/b0_list.pickle", "wb")

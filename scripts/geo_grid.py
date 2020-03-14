@@ -9,6 +9,7 @@ from shapely.geometry import Point, Polygon
 import numpy as np
 import googlemaps
 from collections import defaultdict
+import pandas as pd
 #from datetime import datetime
 # plt.rcParams["figure.figsize"] = [8,6]
 
@@ -131,9 +132,9 @@ def regions_to_crimes(latlongs_to_crimes, latlong_to_regions, num_of_regions):
 # xc = xx.flatten()
 # yc = yy.flatten()
 
+
 if __name__ == '__main__':
 	create_grid(.002, '1k')
-
 
 # # Now convert these points to geo-data
 # pts = GeoSeries([Point(x, y) for x, y in zip(xc, yc)])

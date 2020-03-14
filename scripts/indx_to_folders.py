@@ -14,4 +14,5 @@ b2 = pickle.load(b2_pkl)
 data_path = "../data/streetview_imgs"
 b2f.bin_files(b0, b1, b2, data_path)
 
-
+data_path = "../data/satellite_imgs"
+b2f.bin_files(b0, b1, b2, data_path)

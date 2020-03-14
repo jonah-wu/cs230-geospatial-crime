@@ -5,6 +5,7 @@ from collections import defaultdict
 import bin_to_folder as b2f
 import csv
 import pickle
+import kmeans_for_geo
 
 """
 Script creates all the following data_structs and writes them to pickle files for later reference and usage . 
@@ -12,38 +13,111 @@ Script creates all the following data_structs and writes them to pickle files fo
 
 # ----------- Data ---------------------- #
 latlong_df = pd.read_csv("../data/street_intersections.csv")
-crime_df = pd.read_csv("../data/crime_data.csv")
+#crime_df = pd.read_csv("../data/crime_data.csv")
 #crime_df = crime_df[crime_df['point'].notna()] #Remove nan values
 latlong_df = latlong_df.drop_duplicates(subset=['Latitude', 'Longitude'])
+crime_pkl = open("../data/total_crimes_dict.pickle","rb")
+latlong_to_crimecount = pickle.load(crime_pkl)
 stepsize = .003
 geo_grid_df = geo_grid.create_grid(stepsize, '1k')
 print("After rounding to 5 decimal places we have " + str(latlong_df['Latitude'].size) + " unique lat-long intersections.")
-print("Current crime csv has " + str(crime_df['Latitude'].size) + " crimes recorded")
+num_of_crimes = np.sum(np.asarray(list(latlong_to_crimecount.values())))
+print("Current crime csv has " + str(num_of_crimes) + " crimes recorded")
 
 # ---------- Data Structs ---------- #
 def main():
-	latlongs, indx_to_latlongs = indx_to_latlong(latlong_df)
-	latlong_to_indx = {v: k for k, v in indx_to_latlongs.items()}
-	latlong_to_crimecount, high_crimes_dict = latlong_to_crimecounts(latlongs, crime_df)
-	indx_to_crimecounts = {latlong_to_indx[key]:latlong_to_crimecount[key] for key in latlong_to_crimecount if key in latlongs}
+
+    latlongs, indx_to_latlongs = indx_to_latlong(latlong_df)
+    latlong_to_indx = {v: k for k, v in indx_to_latlongs.items()}
+    indx_to_crimecounts = {latlong_to_indx[key]:latlong_to_crimecount[key] for key in latlong_to_crimecount if key in latlongs}
+    latlongs_to_geoid = geo_grid.latlongs_to_regions(latlongs, geo_grid_df) 
+    geoids_to_regions = geo_grid.ids_to_polygons(geo_grid_df)
+    num_of_regions = len(list(geoids_to_regions.keys()))
+    geoid_to_crimecount = geo_grid.regions_to_crimes(latlong_to_crimecount, latlongs_to_geoid, num_of_regions)
+
+    #print_distribution(geoid_to_crimecount)
+    latlongid_to_geoid = {}
+    for key, idx in latlong_to_indx.items():
+        if key in latlongs_to_geoid: 
+            geo_id = latlongs_to_geoid[key]
+            latlongid_to_geoid.update({idx:geo_id})
+        else:
+            print("Key error," + str(key) +  "not found in latlong_to_regions")      
+
+    print("Running KMeans on our data and clustering into 3 bins ...")
+    geoid_to_label = kmeans_for_geo.run_KMeans(geoid_to_crimecount)
+    cluster_min_maxes = kmeans_for_geo.cluster_min_maxes(geoid_to_label, geoid_to_crimecount)
+    b0, b1, b2 = create_bins_from_clusters(geoid_to_label, latlongid_to_geoid)
+    latlongidx_to_crimecounts = {}
+    for key in latlong_to_crimecount:
+        if key in latlongs:
+            idx = latlong_to_indx[key]
+            crimecount = latlong_to_crimecount[key]
+            latlongidx_to_crimecounts.update({idx:crimecount})
+
+    print('Adding in the leftover unpaired latlongs into the bins based on their raw crime count ...')
+    b0_thresholds = cluster_min_maxes[0]
+    b1_thresholds = cluster_min_maxes[1]
+    b2_thresholds = cluster_min_maxes[2]
+    for key, value in latlongidx_to_crimecounts.items():
+        if value <= b0_thresholds[1] and value >= b0_thresholds[0]: # If less than b0's max threshold than 
+            b0.append(str(key))
+        elif value <= b1_thresholds[1] and value >= b1_thresholds[0]:
+            b1.append(str(key))
+        else:
+            b2.append(str(key))
 
 
-	latlongs_to_geoindx = geo_grid.latlongs_to_regions(latlongs, geo_grid_df) 
-	geoindx_to_regions = geo_grid.ids_to_polygons(geo_grid_df)
-	georegions_to_crimecounts = geo_grid.georegions_to_crimes(latlong_to_crimecount, latlong_to_geoindx)
+    print("Creating the pkle lists...")
+    b0_pkl = open("../data/b0_list.pickle", "wb")
+    pickle.dump(b0, b0_pkl)
+    b0_pkl.close()
 
+    b1_pkl = open("../data/b1_list.pickle", "wb")
+    pickle.dump(b1, b1_pkl)
+    b1_pkl.close()
+
+
+    b2_pkl = open("../data/b2_list.pickle", "wb")
+    pickle.dump(b2, b2_pkl)
+    b2_pkl.close()
+
+    print("Data finished processing")
 	# -----------------Write to Pickle Files-------------------- #
-	idx_to_crimecount_pickle = open("latlong_idx_to_crimecounts.pickle", "wb")
-	pickle.dump(indx_to_crimecounts, idx_to_crimecount_pickle)
-	idx_to_crimecount_pickle.close()
+	# idx_to_crimecount_pickle = open("latlong_idx_to_crimecounts.pickle", "wb")
+	# pickle.dump(indx_to_crimecounts, idx_to_crimecount_pickle)
+	# idx_to_crimecount_pickle.close()
 
 
-	geoids_to_crimecount_pickle = open("geoindices_to_crimecounts.pickle", "wb")
-	pickle.dump(georegions_to_crimecounts, geoids_to_crimecount_pickle)
-	geoids_to_crimecount_pickle.close()
+	# geoids_to_crimecount_pickle = open("geoindices_to_crimecounts.pickle", "wb")
+	# pickle.dump(georegions_to_crimecounts, geoids_to_crimecount_pickle)
+	# geoids_to_crimecount_pickle.close()
 
 
 # ----------- Data Struct Gen Methods --------------- # 
+def create_bins_from_clusters(geoidx_to_label, latlongidx_to_geoidx):
+    b0 = []
+    b1 = []
+    b2 = []
+    for key, value in latlongidx_to_geoidx.items():
+        if not value == 0: # Throw out latlongs that don't sync up to our regions
+            label = geoidx_to_label[value] # the label
+            if label == 0:
+                b0.append(str(key)) # Append the latlong idx
+            elif label == 1:
+                b1.append(str(key))
+            elif label == 2:
+                b2.append(str(key))
+    print("b0 has" + str(len(b0)) + "images in it")
+    print("b1 has" + str(len(b1)) + "images in it")
+    print("b2 has" + str(len(b2)) + "images in it")
+    return b0, b1, b2
+
+
+
+
+
+
 # Returns an indx_to_lat_long dictionary and list of keys to map to crime df (latlong)
 def indx_to_latlong(latlong_df):
     indx_to_latlong_total = {} #total crime count
@@ -60,52 +134,30 @@ def indx_to_latlong(latlong_df):
     return latlongs, indx_to_latlong_total
 
 
-# Returns an latlong to crime_count dictionary
-def latlong_to_crimecounts(latlongs, crime_df):
-    num_matches = 0
-    num_high_crimes = 0
-    latlong_to_crimes_total  = {k : 0 for k in latlongs}
-    high_crimes = ["ARSON", "ASSAULT", "MISSING PERSON", "SEX OFFENSES, FORCIBLE", "SEX OFFENSES, NON-FORCIBLE"]
-    # "Sex offenses, Non-Forcible" are quite minimal in the database I was able to access, so it is okay if it is 
-    # equal to 0.
-    # Note: One problem with this database is that it seems to be lacking important crimes, such as homicides, 
-    # in its database; it is also relatively inconsistent with other databases in terms of description.
-    high_crimes_dict = {} #nested dictionary of high crime count - {latlong :  {crime1: # crime1, crime2: #crime2}}
-    for k in latlongs: #Update the keys from the high_crimes list into the high_crimes_dict
-        high_crimes_dict.update({k:{}}) #initialize keys to an empty dict
-        for crime in high_crimes: 
-            high_crimes_dict[k][crime] = 0 #Initialize the inner dictionary
-    # Note: The latitude and longitude of the crimes from 2003 database is based on specific addresses instead of 
-    # the intersection that it occured, so we will allow for finding the closest intersection to be able to 
-    # extract more data.
-    for x, y, z in zip(crime_df['Latitude'], crime_df['Longitude'], crime_df['Category']):
-        val = str(x) + "," + str(y)
-        
-        # Problem is that will not filter out for invalid data
-        num_matches += 1
+def print_distribution(regions_to_crimes):
+    crime_to_regioncount = {
+        5 : 0,
+        10 : 0,
+        25: 0,
+        50: 0,
+        100: 0,
+        200: 0,
+        500: 0,
+        1000: 0,
+        100000: 0 #the maximum
+    }
 
-        # I commented this out below so that it the program can run faster by 
-        # implementing the min function in the for loop
-        #latlong_to_crimes_total[val] += 1 #Adding count for the cumulative, no distinction between crime types
-        
-        for crime in high_crimes: #Add count to specific crime in dictionary
-            if crime == z:
-                 # This val update function will be used to find matching intersections by finding the most similar 
-        # keys. We hope that this will get the appropriate intersection. The code was taken from the following:
-        # https://www.geeksforgeeks.org/python-find-the-closest-key-in-dictionary/ and https://stackoverflow.com/questions/7934547/python-find-closest-key-in-a-dictionary-from-the-given-input-key
-                val = min(latlong_to_crimes_total.keys(), key = lambda key: 
-                    abs((float(key.split(',')[0]) - float(x)) + (float(key.split(',')[1]) - float(y))))
-                high_crimes_dict[val][crime] += 1
-                num_high_crimes += 1
-                # These are print statements to check the contents of the dictionary
-                print("Stats for " + val + ": ")
-                print(high_crimes_dict[val])
-                print("Num Crimes: " + str(num_matches))
-                print("Num High Crimes: " + str(num_high_crimes))
-    #Print statements
-    print("Out of " + str(crime_df['Latitude'].size) + " crimes in our dataset, there were " + str(num_matches) + " matches")
-    print("Out of " +  str(num_matches) + " matches we retrieved, there were " + str(num_high_crimes) + " high crimes")
-    return latlong_to_crimes_total, high_crimes_dict
+    for key,value in regions_to_crimes.items():
+        for number in crime_to_regioncount.keys():
+            if value <= number:
+                crime_to_regioncount[value] += 1
+
+    for key, item in crime_to_regioncount.items():
+        print("There were " + str(item) + "number of regions that had fewer than or equal to " + str(key) + " crimes with our data")
+
+
+
+
 
 
 if __name__ == '__main__':

@@ -130,7 +130,8 @@ def _input_fn(x,y):
   
 train_ds=_input_fn(x_train,y_train)
 validation_ds=_input_fn(x_test,y_test)
-
+print(train_ds)
+print(validation_ds)
 ## Load VGG16 from here
 IMG_SHAPE = (IMG_SIZE, IMG_SIZE, 3)
 ## Current weights is imagenet, include_top = false means no classification layers
@@ -141,13 +142,16 @@ VGG16_MODEL.trainable=False
 
 global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
 # Dense function turns it to a single prediction for each image
-prediction_layer = tf.keras.layers.Dense(len(label_names),activation='softmax')
+prediction_layer = tf.keras.layers.Dense(len(label_names))
+fc_1 = tf.keras.layers.Dense(512)
+fc_2 = tf.keras.layers.Dense(512)
 
 # Sequential Model - makes a stack of layers - https://keras.io/getting-started/sequential-model-guide/
-model = tf.keras.Sequential([VGG16_MODEL, global_average_layer, prediction_layer])
+sat_model = tf.keras.Sequential([VGG16_MODEL, global_average_layer, fc_1, fc_2, prediction_layer])
+
 
 #See loss functions at https://www.tensorflow.org/api_docs/python/tf/keras/losses - would need to look this up
-model.compile(optimizer=tf.optimizers.Adam(), loss=tf.keras.losses.SparseCategoricalCrossentropy(),  metrics=["accuracy"])
+model.compile(optimizer=tf.optimizers.Adam(), loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),  metrics=["accuracy"])
 
 history = model.fit(train_ds, epochs=100, steps_per_epoch=2, validation_steps=2, validation_data=validation_ds)
 

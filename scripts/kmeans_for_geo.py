@@ -60,7 +60,7 @@ def run_KMeans(geoidx_to_crimecounts):
 	geoidx_to_label = dict(zip(keys, values))
 	return geoidx_to_label
 
-def min_max_of_class(idx_to_label, geoidx_to_crimecounts, num_of_clusters = 3):
+def cluster_min_maxes(idx_to_label, geoidx_to_crimecounts, num_of_clusters = 3):
 	cluster_zero = []
 	cluster_one = []
 	cluster_two = []

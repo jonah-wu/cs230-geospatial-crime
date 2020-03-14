@@ -32,7 +32,7 @@ from keras.preprocessing import image
  
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-data_dir = '../data/streetview_imgs'
+data_dir = '../data/satellite_imgs'
 #data_dir = tf.keras.utils.get_file('flower_photos','https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz', untar=True)
 data_dir = pathlib.Path(data_dir)
 print(data_dir)
@@ -143,8 +143,8 @@ VGG16_MODEL.trainable=False
 global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
 # Dense function turns it to a single prediction for each image
 prediction_layer = tf.keras.layers.Dense(len(label_names))
-fc_1 = tf.keras.layers.Dense(512)
-fc_2 = tf.keras.layers.Dense(512)
+fc_1 = tf.keras.layers.Dense(512, activation = 'relu')
+fc_2 = tf.keras.layers.Dense(512, activation = 'relu')
 
 # Sequential Model - makes a stack of layers - https://keras.io/getting-started/sequential-model-guide/
 sat_model = tf.keras.Sequential([VGG16_MODEL, global_average_layer, fc_1, fc_2, prediction_layer])
@@ -153,7 +153,7 @@ sat_model = tf.keras.Sequential([VGG16_MODEL, global_average_layer, fc_1, fc_2, 
 #See loss functions at https://www.tensorflow.org/api_docs/python/tf/keras/losses - would need to look this up
 model.compile(optimizer=tf.optimizers.Adam(), loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),  metrics=["accuracy"])
 
-history = model.fit(train_ds, epochs=100, steps_per_epoch=2, validation_steps=2, validation_data=validation_ds)
+history = model.fit(train_ds, epochs=100, steps_per_epoch=15, validation_steps=2, validation_data=validation_ds)
 
 validation_steps = 20
  
